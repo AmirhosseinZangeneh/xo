@@ -1,130 +1,193 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace demo
+namespace XO
 {
-    internal class Program
+    internal static class Program
     {
-        static char[,] board = new char[3, 3];
+        private const int BoardSize = 3;
+        private const int CellCount = BoardSize * BoardSize;
+        private static readonly char[,] Board = new char[BoardSize, BoardSize];
 
-        static void Main(string[] args)
+        private static void Main()
         {
-            PlayGame();
-        }
-        static void InitializeBoard()
-        {
-            int num = 1;
-            for (int i = 0; i < 3; i++)
+            bool playAgain;
+
+            do
             {
-                for (int j = 0; j < 3; j++)
+                PlayGame();
+                playAgain = AskToPlayAgain();
+            }
+            while (playAgain);
+
+            Console.WriteLine("Thanks for playing!");
+            Console.WriteLine("Press any key to exit.");
+            Console.ReadKey();
+        }
+
+        private static void InitializeBoard()
+        {
+            int cellNumber = 1;
+
+            for (int row = 0; row < BoardSize; row++)
+            {
+                for (int column = 0; column < BoardSize; column++)
                 {
-                    board[i, j] = num.ToString()[0];
-                    num++;
+                    Board[row, column] = cellNumber.ToString()[0];
+                    cellNumber++;
                 }
             }
         }
 
-        static void DisplayBoard()
+        private static void DisplayBoard()
         {
-            for (int i = 0; i < 3; i++)
+            for (int row = 0; row < BoardSize; row++)
             {
-                for (int j = 0; j < 3; j++)
+                for (int column = 0; column < BoardSize; column++)
                 {
-                    Console.Write($" {board[i, j]} ");
-                    if (j < 2) Console.Write("|");
+                    Console.Write(" " + Board[row, column] + " ");
+
+                    if (column < BoardSize - 1)
+                    {
+                        Console.Write("|");
+                    }
                 }
+
                 Console.WriteLine();
-                if (i < 2) Console.WriteLine("---|---|---");
+
+                if (row < BoardSize - 1)
+                {
+                    Console.WriteLine("---|---|---");
+                }
             }
         }
-        static void PlayerMove(char player)
+
+        private static void PlayerMove(char player)
         {
-            int choice;
             while (true)
             {
-                Console.WriteLine($"Player {player}, enter your move (1-9): ");
-                choice = int.Parse(Console.ReadLine()) - 1;
-                int row = choice / 3;
-                int col = choice % 3;
+                Console.Write("Player " + player + ", choose a cell (1-9): ");
+                string input = Console.ReadLine();
+                int cellNumber;
 
-                if (choice >= 0 && choice <= 8 && board[row, col] != 'X' && board[row, col] != 'O')
+                if (!int.TryParse(input, out cellNumber) || cellNumber < 1 || cellNumber > CellCount)
                 {
-                    board[row, col] = player;
-                    break;
+                    Console.WriteLine("Please enter a number between 1 and 9.");
+                    continue;
                 }
-                else
+
+                int index = cellNumber - 1;
+                int row = index / BoardSize;
+                int column = index % BoardSize;
+
+                if (!IsCellAvailable(row, column))
                 {
-                    Console.WriteLine("Invalid move, try again.");
+                    Console.WriteLine("That cell is already occupied. Choose another one.");
+                    continue;
                 }
+
+                Board[row, column] = player;
+                return;
             }
         }
-        static bool CheckWin(char player)
+
+        private static bool IsCellAvailable(int row, int column)
         {
-            for (int i = 0; i < 3; i++)
+            return Board[row, column] != 'X' && Board[row, column] != 'O';
+        }
+
+        private static bool CheckWin(char player)
+        {
+            for (int index = 0; index < BoardSize; index++)
             {
-                if ((board[i, 0] == player && board[i, 1] == player && board[i, 2] == player) ||
-                    (board[0, i] == player && board[1, i] == player && board[2, i] == player))
+                bool rowMatch = Board[index, 0] == player &&
+                                Board[index, 1] == player &&
+                                Board[index, 2] == player;
+
+                bool columnMatch = Board[0, index] == player &&
+                                   Board[1, index] == player &&
+                                   Board[2, index] == player;
+
+                if (rowMatch || columnMatch)
                 {
                     return true;
                 }
             }
 
-            if ((board[0, 0] == player && board[1, 1] == player && board[2, 2] == player) ||
-                (board[0, 2] == player && board[1, 1] == player && board[2, 0] == player))
-            {
-                return true;
-            }
-
-            return false;
+            return (Board[0, 0] == player && Board[1, 1] == player && Board[2, 2] == player) ||
+                   (Board[0, 2] == player && Board[1, 1] == player && Board[2, 0] == player);
         }
-        static bool IsDraw()
+
+        private static bool IsDraw()
         {
-            foreach (var cell in board)
+            for (int row = 0; row < BoardSize; row++)
             {
-                if (cell != 'X' && cell != 'O')
+                for (int column = 0; column < BoardSize; column++)
                 {
-                    return false;
+                    if (IsCellAvailable(row, column))
+                    {
+                        return false;
+                    }
                 }
             }
 
             return true;
         }
-        static void PlayGame()
+
+        private static void PlayGame()
         {
-            char currentPlayer = 'X';
             InitializeBoard();
+            char currentPlayer = 'X';
 
             while (true)
             {
                 Console.Clear();
                 DisplayBoard();
+                Console.WriteLine();
                 PlayerMove(currentPlayer);
 
                 if (CheckWin(currentPlayer))
                 {
                     Console.Clear();
                     DisplayBoard();
-                    Console.WriteLine($"Player {currentPlayer} wins!");
-                    break;
+                    Console.WriteLine();
+                    Console.WriteLine("Player " + currentPlayer + " wins!");
+                    return;
                 }
 
                 if (IsDraw())
                 {
                     Console.Clear();
                     DisplayBoard();
-                    Console.WriteLine("It's a draw!");
-                    break;
+                    Console.WriteLine();
+                    Console.WriteLine("It is a draw!");
+                    return;
                 }
 
                 currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
             }
+        }
 
-            Console.WriteLine("Game Over!");
-            Console.ReadKey();
+        private static bool AskToPlayAgain()
+        {
+            while (true)
+            {
+                Console.Write("Play again? (y/n): ");
+                string input = Console.ReadLine();
+
+                if (string.Equals(input, "y", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(input, "yes", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (string.Equals(input, "n", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(input, "no", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                Console.WriteLine("Please enter y or n.");
+            }
         }
     }
-
 }
