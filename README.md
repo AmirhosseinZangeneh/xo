@@ -1,3 +1,7 @@
+## Portfolio Context
+
+This project represents the beginning of my C# learning journey and focuses on fundamental programming concepts before moving into desktop applications and larger backend systems.
+
 # XO Game
 
 A simple console-based Tic-Tac-Toe game written in C#. Two players take turns placing `X` and `O` on a 3×3 board until one player wins or the board is full.
